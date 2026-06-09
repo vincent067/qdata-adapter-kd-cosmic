@@ -700,11 +700,17 @@ class KdCosmicAdapterStandardInterface(BaseInterface):
         """
         app_id, form_id = self._parse_object_type(object_type)
 
-        # 支持从 data 中透传自定义操作类型（如 qeasyadd）
+        # 支持从 data 中透传自定义操作类型（如 qeasyadd）和 API 版本
         op = operation if operation is not None else data.pop("_operation", "save")
+        api_version = data.pop("_api_version", "")
 
-        request_body = {"data": data}
-        api_path = self._get_api_path(app_id, form_id, op)
+        # 轻易云操作（qeasyadd 等）要求 data 为数组格式
+        if op.startswith("qeasy") and isinstance(data, dict):
+            request_body = {"data": [data]}
+        else:
+            request_body = {"data": data}
+
+        api_path = self._get_api_path(app_id, form_id, op, api_version)
 
         try:
             response = await self.http_client.post(
