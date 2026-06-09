@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-09
+
+### Added
+
+- `create_object` now supports custom operation types via:
+  - `data["_operation"]`` (e.g. `"qeasyadd"` for Kingdee EasyCloud add APIs)
+  - explicit `operation` parameter (takes precedence over `data._operation`)
+- Added unit tests for `create_object` covering default `save`, custom operation via data, and explicit operation parameter
+
+### Changed
+
+- Abstract `create_object` signature in `BaseInterface` updated to accept optional `operation` parameter
+- `KdCosmicAdapter.create_object` proxy updated to forward `operation` to the interface
+
+## [0.1.1] - 2026-06-04
+
 ### Added
 
 - Initial release of qdata-adapter-kd-cosmic

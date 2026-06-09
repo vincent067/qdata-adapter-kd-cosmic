@@ -155,10 +155,15 @@ class KdCosmicAdapter(BaseAppAdapter):
         await self.ensure_authenticated()
         return await self._interface.get_object(object_type, object_id)
 
-    async def create_object(self, object_type: str, data: dict[str, Any]) -> dict[str, Any]:
+    async def create_object(
+        self,
+        object_type: str,
+        data: dict[str, Any],
+        operation: str | None = None,
+    ) -> dict[str, Any]:
         """创建对象"""
         await self.ensure_authenticated()
-        return await self._interface.create_object(object_type, data)
+        return await self._interface.create_object(object_type, data, operation=operation)
 
     # -------------------------------------------------------------------------
     # 自定义 API 方法（核心）

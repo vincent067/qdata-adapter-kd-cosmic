@@ -666,3 +666,114 @@ class TestKdCosmicAdapter:
         app_id, form_id = adapter._interface._parse_object_type("pm_purorderbill")
         assert app_id == "sys"  # 默认值
         assert form_id == "pm_purorderbill"
+
+    # -------------------------------------------------------------------------
+    # 写入测试（create_object）
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_create_object_default_save(
+        self,
+        standard_context: ConnectorContext,
+        mock_token_cache: Any,
+        httpx_mock: HTTPXMock,
+    ) -> None:
+        """测试 create_object 默认使用 save 操作"""
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/oauth2/getToken",
+            json={
+                "errorCode": "0",
+                "data": {"access_token": "token", "expires_in": 7200000},
+                "status": True,
+            },
+        )
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/basedata/bd_material/save",
+            json={
+                "errorCode": "0",
+                "data": {"result": [], "failCount": "0", "successCount": "1"},
+                "status": True,
+            },
+        )
+
+        adapter = KdCosmicAdapter(standard_context, mock_token_cache)
+        result = await adapter.create_object(
+            "basedata.bd_material",
+            {"number": "MAT001", "name": "Test Material"},
+        )
+
+        assert result["successCount"] == "1"
+
+    @pytest.mark.asyncio
+    async def test_create_object_custom_operation_via_data(
+        self,
+        standard_context: ConnectorContext,
+        mock_token_cache: Any,
+        httpx_mock: HTTPXMock,
+    ) -> None:
+        """测试通过 data._operation 自定义操作类型（如 qeasyadd）"""
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/oauth2/getToken",
+            json={
+                "errorCode": "0",
+                "data": {"access_token": "token", "expires_in": 7200000},
+                "status": True,
+            },
+        )
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/basedata/bd_material/qeasyadd",
+            json={
+                "errorCode": "0",
+                "data": {"result": [], "failCount": "0", "successCount": "1"},
+                "status": True,
+            },
+        )
+
+        adapter = KdCosmicAdapter(standard_context, mock_token_cache)
+        result = await adapter.create_object(
+            "basedata.bd_material",
+            {"number": "MAT001", "name": "Test Material", "_operation": "qeasyadd"},
+        )
+
+        assert result["successCount"] == "1"
+
+    @pytest.mark.asyncio
+    async def test_create_object_explicit_operation_param(
+        self,
+        standard_context: ConnectorContext,
+        mock_token_cache: Any,
+        httpx_mock: HTTPXMock,
+    ) -> None:
+        """测试通过显式 operation 参数自定义操作类型，优先级高于 data._operation"""
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/oauth2/getToken",
+            json={
+                "errorCode": "0",
+                "data": {"access_token": "token", "expires_in": 7200000},
+                "status": True,
+            },
+        )
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/basedata/bd_material/qeasyadd",
+            json={
+                "errorCode": "0",
+                "data": {"result": [], "failCount": "0", "successCount": "1"},
+                "status": True,
+            },
+        )
+
+        adapter = KdCosmicAdapter(standard_context, mock_token_cache)
+        # operation 参数优先级高于 data._operation
+        result = await adapter.create_object(
+            "basedata.bd_material",
+            {"number": "MAT001", "name": "Test Material", "_operation": "save"},
+            operation="qeasyadd",
+        )
+
+        assert result["successCount"] == "1"
