@@ -777,3 +777,83 @@ class TestKdCosmicAdapter:
         )
 
         assert result["successCount"] == "1"
+
+    @pytest.mark.asyncio
+    async def test_create_object_with_api_version(
+        self,
+        standard_context: ConnectorContext,
+        mock_token_cache: Any,
+        httpx_mock: HTTPXMock,
+    ) -> None:
+        """测试通过 data._api_version 指定 API 版本路径"""
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/oauth2/getToken",
+            json={
+                "errorCode": "0",
+                "data": {"access_token": "token", "expires_in": 7200000},
+                "status": True,
+            },
+        )
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/v2/null/basedata/bd_material/qeasyadd",
+            json={
+                "errorCode": "0",
+                "data": {"result": [], "failCount": "0", "successCount": "1"},
+                "status": True,
+            },
+        )
+
+        adapter = KdCosmicAdapter(standard_context, mock_token_cache)
+        result = await adapter.create_object(
+            "basedata.bd_material",
+            {
+                "number": "MAT001",
+                "name": "Test Material",
+                "_operation": "qeasyadd",
+                "_api_version": "v2/null",
+            },
+        )
+
+        assert result["successCount"] == "1"
+
+    @pytest.mark.asyncio
+    async def test_create_object_qeasy_wraps_dict_in_list(
+        self,
+        standard_context: ConnectorContext,
+        mock_token_cache: Any,
+        httpx_mock: HTTPXMock,
+    ) -> None:
+        """测试 qeasyadd 自动将 dict 包装为列表发送"""
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/oauth2/getToken",
+            json={
+                "errorCode": "0",
+                "data": {"access_token": "token", "expires_in": 7200000},
+                "status": True,
+            },
+        )
+        httpx_mock.add_response(
+            method="POST",
+            url="https://api.example.com/kapi/basedata/bd_material/qeasyadd",
+            json={
+                "errorCode": "0",
+                "data": {"result": [], "failCount": "0", "successCount": "1"},
+                "status": True,
+            },
+        )
+
+        adapter = KdCosmicAdapter(standard_context, mock_token_cache)
+        await adapter.create_object(
+            "basedata.bd_material",
+            {"number": "MAT001", "name": "Test Material", "_operation": "qeasyadd"},
+        )
+
+        request = httpx_mock.get_request(url="https://api.example.com/kapi/basedata/bd_material/qeasyadd")
+        import json
+        body = json.loads(request.content)
+        assert "data" in body
+        assert isinstance(body["data"], list)
+        assert body["data"][0]["number"] == "MAT001"

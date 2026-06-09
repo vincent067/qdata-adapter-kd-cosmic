@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-06-09
+
+### Added
+
+- `create_object` now supports `_api_version` in data (e.g. `"v2/null"` for EasyCloud APIs)
+- `create_object` automatically wraps dict into list for `qeasy*` operations (e.g. `qeasyadd` requires `{"data": [...]}`)
+- Added unit tests for `_api_version` path building and `qeasyadd` list wrapping
+
 ## [0.1.2] - 2026-06-09
 
 ### Added
