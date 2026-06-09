@@ -678,21 +678,33 @@ class KdCosmicAdapterStandardInterface(BaseInterface):
                 details={"object_type": object_type, "object_id": object_id, "error": str(e)},
             ) from e
 
-    async def create_object(self, object_type: str, data: dict[str, Any]) -> dict[str, Any]:
+    async def create_object(
+        self,
+        object_type: str,
+        data: dict[str, Any],
+        operation: str | None = None,
+    ) -> dict[str, Any]:
         """
-        创建对象（保存操作）
+        创建对象（保存/新增操作）
+
+        默认调用 ``save`` 接口；可通过 ``data._operation`` 或
+        ``operation`` 参数指定其他操作（如 ``qeasyadd``）。
 
         Args:
             object_type: 对象类型
             data: 对象数据
+            operation: 显式指定操作类型，优先级高于 ``data._operation``
 
         Returns:
             创建后的对象数据
         """
         app_id, form_id = self._parse_object_type(object_type)
 
+        # 支持从 data 中透传自定义操作类型（如 qeasyadd）
+        op = operation if operation is not None else data.pop("_operation", "save")
+
         request_body = {"data": data}
-        api_path = self._get_api_path(app_id, form_id, "save")
+        api_path = self._get_api_path(app_id, form_id, op)
 
         try:
             response = await self.http_client.post(

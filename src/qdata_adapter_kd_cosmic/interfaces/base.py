@@ -106,13 +106,19 @@ class BaseInterface(ABC):
         pass
 
     @abstractmethod
-    async def create_object(self, object_type: str, data: dict[str, Any]) -> dict[str, Any]:
+    async def create_object(
+        self,
+        object_type: str,
+        data: dict[str, Any],
+        operation: str | None = None,
+    ) -> dict[str, Any]:
         """
         创建对象
 
         Args:
             object_type: 对象类型
             data: 对象数据
+            operation: 操作类型，如 ``save``、``qeasyadd``
 
         Returns:
             创建后的对象数据
